@@ -1,5 +1,7 @@
 import pickle
 import os, os.path
+import json
+from pprint import pprint
 from collections import Counter
 
 deck_lists = []
@@ -13,6 +15,19 @@ original_amount = 1.0-synergy_amount
 # Thanks to answer by Daniel Stutzbach at https://stackoverflow.com/questions/2632205/how-to-count-the-number-of-files-in-a-directory-using-python
 DIR = './mtg-decks'
 total_length = len([name for name in os.listdir(DIR) if os.path.isfile(os.path.join(DIR, name))])-1
+
+with open('AllCards.json') as card_data:
+	all_cards = json.load(card_data)
+
+land_cards = []
+
+for key in all_cards:
+	if all_cards[key]['type'] == "Land":
+		land_cards.append(key)
+
+#print land_cards
+
+#exit()
 
 card_weights = {}
 card_percentages = {}
@@ -44,6 +59,7 @@ for i in range(total_length):
 			current_card = str(current_card).replace("&","")
 			current_card = str(current_card).replace(";","")
 			current_card = str(current_card).replace("#","")
+			# Replace that HTML character code with an actual apostrophe
 			current_card = str(current_card).replace("39","'")
 			split_deck[j] = current_card
 
@@ -113,11 +129,32 @@ for key in synergized_counts:
 	combined_value = original_value+synergy_value
 	final_deck[key] = combined_value
 
-only_get_some = 100
+for i in range(12):
+	print "Forest"
+for i in range(7):
+	print "Mountain"
+
+total_basics = 19
+total_non_basics = 17
+
+only_get_some = 100 - total_basics
+
+
+total_non_basics = total_non_basics - 3
 
 for key, value in sorted(final_deck.iteritems(), key=lambda (k,v): (v,k), reverse=True):
 	only_get_some = only_get_some - 1
+	if key in land_cards:
+		if total_non_basics < 0:
+			only_get_some = only_get_some + 1
+			continue
+
+		total_non_basics = total_non_basics - 1
+
 	if only_get_some < 0:
 		break
-	print "%s" % (key)
 
+	if key == "Omnath, Locus of Rage":
+		print "Omnath, Locus of Rage *CMDR*"
+	else:
+		print "%s" % (key)
