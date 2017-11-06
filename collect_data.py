@@ -135,12 +135,15 @@ print "Done initializing weighted synergies"
 for key in card_synergies:
 	for other_key in card_synergies[key]:
 		tmp_synergy_value = card_synergies[key][other_key]
+		# Skip no-synergy onces
+		if tmp_synergy_value < .001:
+			continue
 		tmp_frequency_value = card_frequencies[other_key]
 		weighted_synergies[key][other_key] = tmp_synergy_value / tmp_frequency_value
 
 print "Done applying synergy weights"
 
-print weighted_synergies
+print weighted_synergies['Cultivate']
 
 
 """
