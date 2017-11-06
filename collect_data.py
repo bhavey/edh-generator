@@ -7,9 +7,12 @@ from collections import Counter
 deck_lists = []
 synergy_dict = {}
 
-average_cards = 76
+synergy_amount = 1
+number_of_synergy_cards_deep = 28
+number_of_deck_cards_deep = 200
 
-synergy_amount = .7
+# Weird glitch makes this modifier necessary, peak synergy occurs at 75%, need to figure out why.
+synergy_amount = synergy_amount*.75
 original_amount = 1.0-synergy_amount
 
 # Thanks to answer by Daniel Stutzbach at https://stackoverflow.com/questions/2632205/how-to-count-the-number-of-files-in-a-directory-using-python
@@ -199,25 +202,20 @@ current_deck = []
 average_deck = []
 
 #previous_deck = []
-previous_deck = sorted_tmp_card_freq[:100]
+previous_deck = sorted_tmp_card_freq[:number_of_deck_cards_deep]
 
 # Seed the root card in the deck.
-for i in range(100):
-#	previous_deck.append(tuple((sorted_tmp_card_freq[i][0])))
+for i in range(number_of_deck_cards_deep):
 	average_deck.append(([sorted_tmp_card_freq[i][0], sorted_tmp_card_freq[i][1]]))
 
-for i in range(150):
+for i in range(number_of_deck_cards_deep):
 	current_card = sorted_tmp_card_freq[i][0]
 	number_synergy_cards = len(ordered_weighted_synergies[current_card])
-	number_to_loop = 10;
-	if number_synergy_cards < 10:
+	number_to_loop = number_of_synergy_cards_deep;
+	if number_synergy_cards < number_of_synergy_cards_deep:
 		number_to_loop = number_synergy_cards
 	for j in range(number_to_loop):
-#		if (i == 25):
-#			expected_card = str(ordered_weighted_synergies[current_card][j][0])
-#			print "current card: "+current_card+" "+str(ordered_weighted_synergies[current_card][j])
-#			print "if '"+expected_card+"' not in split_deck:"
-#			print "    print \"FAILED TO FIND "+expected_card+"\""
+#	for j in range(number_synergy_cards):
 		tmp_syn_card = ordered_weighted_synergies[current_card][j][0]
 		tmp_syn_freq = float(ordered_weighted_synergies[current_card][j][1])
 		default_value = float(original_amount * float(card_frequencies[tmp_syn_card]))
@@ -226,26 +224,40 @@ for i in range(150):
 		new_value = float(default_value + tmp_syn_value)
 		tmp_card_freq[tmp_syn_card] = new_value
 
-#	if (i == 25):
-#		exit()
-
 	sorted_tmp_card_freq = sorted(tmp_card_freq.items(), key=lambda x: x[1], reverse=True)
 	del current_deck[:]
 	for j in range(i+1):
 		current_deck.append(sorted_tmp_card_freq[j][0])
-	for j in range(i+1):
-		if current_deck[j] != previous_deck[j][0]:
-			print "current_deck: "
-			print current_deck
-			print "previous_deck: "
-			print previous_deck[:j+1]
-			print "new deck starting at card "+str(i)
-			print "sorted_tmp_card_freq:"
-			print sorted_tmp_card_freq[:j+3]
-			exit()
 
+current_deck_list = [None] * 150
+previous_deck_list = [None] * 150
 
-print "Done re-weighing"
+# 110 here so we can see the trailing values.
+for i in range(150):
+	current_deck_list[i] = current_deck[i]
+	previous_deck_list[i] = previous_deck[i][0]
+
+current_full_deck = current_deck_list[:100]
+previous_full_deck = previous_deck_list[:100]
+
+print "current_deck: "
+print current_deck_list
+print "previous_deck: "
+print previous_deck_list
+
+total_different_cards = 0
+non_shared_cards = []
+
+for i in range(100):
+	if current_full_deck[i] not in previous_full_deck:
+		total_different_cards += 1
+		non_shared_cards.append(current_full_deck[i])
+
+print "different cards: "
+print non_shared_cards
+
+print "total number of different cards: "+str(total_different_cards)
+
 
 """
 print "Starting setting up new synergized counts"
