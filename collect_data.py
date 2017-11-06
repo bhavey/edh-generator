@@ -9,7 +9,7 @@ synergy_dict = {}
 
 average_cards = 76
 
-synergy_amount = .999
+synergy_amount = .7
 original_amount = 1.0-synergy_amount
 
 # Thanks to answer by Daniel Stutzbach at https://stackoverflow.com/questions/2632205/how-to-count-the-number-of-files-in-a-directory-using-python
@@ -144,10 +144,18 @@ for key in card_synergies:
 #			print "number of synergies: "+str(tmp_synergy_value)+", number of occurences: "+str(tmp_frequency_value)
 
 ordered_weighted_synergies = {}
+cards_to_reorder = {}
+reordered_sort = []
+
 # Ordered weighted synergies.
 for key in weighted_synergies:
 	tmp_sorted_synergies = sorted(weighted_synergies[key].items(), key=lambda x: x[1], reverse=True)
+
+	number_same = 0
 	for i in range(len(tmp_sorted_synergies)-1):
+		if number_same > 0:
+			number_same -= 1
+			continue
 		number_same = 0
 		for j in range(i,len(tmp_sorted_synergies)):
 			if tmp_sorted_synergies[j][1] != tmp_sorted_synergies[i][1]:
@@ -156,17 +164,29 @@ for key in weighted_synergies:
 			if j == len(tmp_sorted_synergies)-1:
 				number_same = j - i
 				break
-#		if number_same != 0:
-#			for j in range(number_same):
-
-
-		if tmp_sorted_synergies[i][1] == tmp_sorted_synergies[i+1][1]:
-			for 
-			print "Repeat synergies."
+		cards_to_reorder.clear()
+		del reordered_sort[:]
+		if number_same != 0:
+			for j in range(i, i+number_same):
+				card_to_reorder = tmp_sorted_synergies[j][0]
+				cards_to_reorder[card_to_reorder] = card_frequencies[card_to_reorder]
+			reordered_sort = sorted(cards_to_reorder.items(), key=lambda x: x[1], reverse=True)
+			for j in range(i, i+number_same):
+				tmp_sorted_synergies[j] = tuple([reordered_sort[j-i][0],tmp_sorted_synergies[i][1]])
 
 	ordered_weighted_synergies[key] = tmp_sorted_synergies
 
+
+
+cultivate_ordered_weights = ordered_weighted_synergies['Cultivate']
+#for i in range(len(cultivate_ordered_weights)):
+#	print cultivate_ordered_weights[i][0]+" "+str(cultivate_ordered_weights[i][1])+", "+str(card_frequencies[cultivate_ordered_weights[i][0]])
+
+#print ordered_weighted_synergies['Cultivate']
+
 print "Done figuring out weights."
+
+#exit()
 
 tmp_card_freq = {}
 # card_frequencies
