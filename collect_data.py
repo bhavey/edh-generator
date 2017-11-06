@@ -7,14 +7,16 @@ from collections import Counter
 deck_lists = []
 synergy_dict = {}
 
-synergy_amount = 1
+synergy_amount = 0.9
 number_of_synergy_cards_deep = 28
-number_of_deck_cards_deep = 200
+number_of_deck_cards_deep = 150
 min_count_for_synergy = 4
 
 # Weird glitch makes this modifier necessary, peak synergy occurs at 75%, need to figure out why.
 synergy_amount = synergy_amount*.75
 original_amount = 1.0-synergy_amount
+cards_to_go_over = number_of_deck_cards_deep
+
 
 # Thanks to answer by Daniel Stutzbach at https://stackoverflow.com/questions/2632205/how-to-count-the-number-of-files-in-a-directory-using-python
 DIR = './mtg-decks'
@@ -199,7 +201,7 @@ for key in card_frequencies:
 
 sorted_tmp_card_freq = sorted(card_frequencies.items(), key=lambda x: x[1], reverse=True)
 
-current_deck = []
+current_deck = [None] * number_of_deck_cards_deep
 average_deck = []
 
 #previous_deck = []
@@ -230,16 +232,22 @@ for i in range(number_of_deck_cards_deep):
 	for j in range(i+1):
 		current_deck.append(sorted_tmp_card_freq[j][0])
 
-current_deck_list = [None] * 150
-previous_deck_list = [None] * 150
+#	for 
+
+current_deck_list = [None] * cards_to_go_over
+previous_deck_list = [None] * cards_to_go_over
 
 # 110 here so we can see the trailing values.
-for i in range(150):
-	current_deck_list[i] = current_deck[i]
+for i in range(cards_to_go_over):
+#	current_deck_list[i] = current_deck[i]
+	current_deck_list[i] = sorted_tmp_card_freq[i][0]
 	previous_deck_list[i] = previous_deck[i][0]
 
-current_full_deck = current_deck_list[:100]
-previous_full_deck = previous_deck_list[:100]
+
+cards_to_go_through = 100
+
+current_full_deck = current_deck_list[:cards_to_go_through]
+previous_full_deck = previous_deck_list[:cards_to_go_through]
 
 #print "current_deck: "
 #print current_deck_list
@@ -247,17 +255,81 @@ previous_full_deck = previous_deck_list[:100]
 #print previous_deck_list
 
 total_different_cards = 0
-non_shared_cards = []
 
-for i in range(100):
+for i in range(cards_to_go_through):
 	if current_full_deck[i] not in previous_full_deck:
 		total_different_cards += 1
-		non_shared_cards.append(current_full_deck[i])
 
+non_shared_cards = [None] * total_different_cards
+non_shared_cards_previous = [None] * total_different_cards
+
+current_missing_idx = 0
+previous_missing_idx = 0
+
+for i in range(cards_to_go_through):
+	if current_full_deck[i] not in previous_full_deck:
+		non_shared_cards[current_missing_idx] = current_full_deck[i]
+		current_missing_idx += 1
+	if previous_full_deck[i] not in current_full_deck:
+		non_shared_cards_previous[previous_missing_idx] = previous_full_deck[i]
+		previous_missing_idx += 1
+
+
+print "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 print "different cards: "
 print non_shared_cards
+print "previous missing cards: "
+print non_shared_cards_previous
+
 
 print "total number of different cards: "+str(total_different_cards)
+
+print "~ DECK ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+
+
+build_offset = 0
+
+
+total_basics = 19
+total_non_basics = 17
+
+only_get_some = 100 - total_basics
+
+non_basics_available = 0
+for i in range(100):
+	tmp_key = current_deck_list[i]
+	if tmp_key in land_cards:
+		non_basics_available += 1
+
+non_basics_diff =  non_basics_available - total_non_basics
+
+if non_basics_diff < 0:
+	print "Add "+str(non_basics_diff * -1)+" additional lands."
+	only_get_some = non_basics_diff + only_get_some
+
+for i in range(12):
+	print "Forest"
+for i in range(7):
+	print "Mountain"
+
+
+for i in range(only_get_some):
+	tmp_key = current_deck_list[i+build_offset]
+
+	if total_non_basics == 0:
+		# Get the next non-land card.
+		while tmp_key in land_cards:
+			build_offset += 1
+			tmp_key = current_deck_list[i+build_offset]
+	else:
+		if tmp_key in land_cards:
+			total_non_basics -= 1;
+
+	if tmp_key == "Omnath, Locus of Rage":
+		print "Omnath, Locus of Rage *CMDR*"
+	else:
+		print "%s" % (tmp_key)
+
 
 
 """
