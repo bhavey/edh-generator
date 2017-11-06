@@ -3,14 +3,13 @@ import os, os.path
 import json
 from pprint import pprint
 from collections import Counter
-from itertools import dropwhile
 
 deck_lists = []
 synergy_dict = {}
 
 average_cards = 76
 
-synergy_amount = .95
+synergy_amount = .999
 original_amount = 1.0-synergy_amount
 
 # Thanks to answer by Daniel Stutzbach at https://stackoverflow.com/questions/2632205/how-to-count-the-number-of-files-in-a-directory-using-python
@@ -94,11 +93,8 @@ for key in card_frequencies:
 	card_weights[key] = float(card_frequencies[key])/total_length
 
 # Generate the synergy list
-tmp_card_freq = card_frequencies
-
 card_synergies = {}
 
-print "Starting card frequencies top"
 # Initialize the card synergies.
 for key in card_frequencies:
 	card_synergies[key] = Counter()
@@ -106,7 +102,7 @@ for key in card_frequencies:
 		# Skip repeats
 		if (key == other_key):
 			continue
-		card_synergies[key][other_key] += 0
+		card_synergies[key][other_key] = 0
 
 for deck in deck_list_collection:
 	for card_x in deck:
@@ -122,36 +118,121 @@ for deck in deck_list_collection:
 			if card_y not in card_frequencies:
 				continue
 
+#			if card_x == 'Parallel Lives':
+#				if card_y == 'Primal Vigor':
+#					print "found primal vigor!"
+
+
 			card_synergies[card_x][card_y] += 1
-print "Done cycling through decks."
 
 weighted_synergies = {}
 # Initialize the weighted synergies.
 for key in card_frequencies:
 	weighted_synergies[key] = {}
 
-print "Done initializing weighted synergies"
-
 for key in card_synergies:
 	for other_key in card_synergies[key]:
-		tmp_synergy_value = card_synergies[key][other_key]
+		tmp_synergy_value = float(card_synergies[key][other_key])
 		# Skip no-synergy onces
 		if tmp_synergy_value < .001:
 			continue
-		tmp_frequency_value = card_frequencies[other_key]
-		weighted_synergies[key][other_key] = tmp_synergy_value / tmp_frequency_value
+		tmp_frequency_value = float(card_frequencies[other_key])
+		tmp_weighted_value = float(tmp_synergy_value / tmp_frequency_value)
+		weighted_synergies[key][other_key] = tmp_weighted_value
+#		if (tmp_weighted_value >= .95):
+#			print "Card "+key+" synergizes "+str(tmp_weighted_value)+"% of the time with card "+other_key
+#			print "number of synergies: "+str(tmp_synergy_value)+", number of occurences: "+str(tmp_frequency_value)
 
-print "Done applying synergy weights"
+ordered_weighted_synergies = {}
+# Ordered weighted synergies.
+for key in weighted_synergies:
+	tmp_sorted_synergies = sorted(weighted_synergies[key].items(), key=lambda x: x[1], reverse=True)
+	for i in range(len(tmp_sorted_synergies)-1):
+		number_same = 0
+		for j in range(i,len(tmp_sorted_synergies)):
+			if tmp_sorted_synergies[j][1] != tmp_sorted_synergies[i][1]:
+				number_same = j - i
+				break
+			if j == len(tmp_sorted_synergies)-1:
+				number_same = j - i
+				break
+#		if number_same != 0:
+#			for j in range(number_same):
 
-print weighted_synergies['Cultivate']
 
+		if tmp_sorted_synergies[i][1] == tmp_sorted_synergies[i+1][1]:
+			for 
+			print "Repeat synergies."
+
+	ordered_weighted_synergies[key] = tmp_sorted_synergies
+
+print "Done figuring out weights."
+
+tmp_card_freq = {}
+# card_frequencies
+for key in card_frequencies:
+	tmp_card_freq[key] = float(card_frequencies[key])
+
+sorted_tmp_card_freq = sorted(card_frequencies.items(), key=lambda x: x[1], reverse=True)
+
+current_deck = []
+average_deck = []
+
+#previous_deck = []
+previous_deck = sorted_tmp_card_freq[:100]
+
+# Seed the root card in the deck.
+for i in range(100):
+#	previous_deck.append(tuple((sorted_tmp_card_freq[i][0])))
+	average_deck.append(([sorted_tmp_card_freq[i][0], sorted_tmp_card_freq[i][1]]))
+
+for i in range(150):
+	current_card = sorted_tmp_card_freq[i][0]
+	number_synergy_cards = len(ordered_weighted_synergies[current_card])
+	number_to_loop = 10;
+	if number_synergy_cards < 10:
+		number_to_loop = number_synergy_cards
+	for j in range(number_to_loop):
+#		if (i == 25):
+#			expected_card = str(ordered_weighted_synergies[current_card][j][0])
+#			print "current card: "+current_card+" "+str(ordered_weighted_synergies[current_card][j])
+#			print "if '"+expected_card+"' not in split_deck:"
+#			print "    print \"FAILED TO FIND "+expected_card+"\""
+		tmp_syn_card = ordered_weighted_synergies[current_card][j][0]
+		tmp_syn_freq = float(ordered_weighted_synergies[current_card][j][1])
+		default_value = float(original_amount * float(card_frequencies[tmp_syn_card]))
+		tmp_syn_value = float(synergy_amount * tmp_syn_freq * default_value)
+
+		new_value = float(default_value + tmp_syn_value)
+		tmp_card_freq[tmp_syn_card] = new_value
+
+#	if (i == 25):
+#		exit()
+
+	sorted_tmp_card_freq = sorted(tmp_card_freq.items(), key=lambda x: x[1], reverse=True)
+	del current_deck[:]
+	for j in range(i+1):
+		current_deck.append(sorted_tmp_card_freq[j][0])
+	for j in range(i+1):
+		if current_deck[j] != previous_deck[j][0]:
+			print "current_deck: "
+			print current_deck
+			print "previous_deck: "
+			print previous_deck[:j+1]
+			print "new deck starting at card "+str(i)
+			print "sorted_tmp_card_freq:"
+			print sorted_tmp_card_freq[:j+3]
+			exit()
+
+
+print "Done re-weighing"
 
 """
 print "Starting setting up new synergized counts"
 
 card_limit=200
 card_counter=0
-total_synergy_counts = {}
+total_synergy_counts = {}	
 overall_synergy_count = 0
 
 for key in synergy_dict:
