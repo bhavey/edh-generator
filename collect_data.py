@@ -10,6 +10,7 @@ synergy_dict = {}
 synergy_amount = 1
 number_of_synergy_cards_deep = 28
 number_of_deck_cards_deep = 200
+min_count_for_synergy = 4
 
 # Weird glitch makes this modifier necessary, peak synergy occurs at 75%, need to figure out why.
 synergy_amount = synergy_amount*.75
@@ -84,7 +85,7 @@ card_frequencies = Counter(deck_lists)
 # Remove low frequency cards from the list.
 keys_to_remove = []
 for key in card_frequencies:
-	if card_frequencies[key] < 4:
+	if card_frequencies[key] < min_count_for_synergy:
 		keys_to_remove.append(key)
 
 for key in keys_to_remove:
@@ -240,10 +241,10 @@ for i in range(150):
 current_full_deck = current_deck_list[:100]
 previous_full_deck = previous_deck_list[:100]
 
-print "current_deck: "
-print current_deck_list
-print "previous_deck: "
-print previous_deck_list
+#print "current_deck: "
+#print current_deck_list
+#print "previous_deck: "
+#print previous_deck_list
 
 total_different_cards = 0
 non_shared_cards = []
