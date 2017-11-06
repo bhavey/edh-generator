@@ -3,6 +3,7 @@ import os, os.path
 import json
 from pprint import pprint
 from collections import Counter
+from itertools import dropwhile
 
 deck_lists = []
 synergy_dict = {}
@@ -25,13 +26,11 @@ for key in all_cards:
 	if all_cards[key]['type'] == "Land":
 		land_cards.append(key)
 
-#print land_cards
-
-#exit()
-
 card_weights = {}
 card_percentages = {}
 card_count = 0
+
+deck_list_collection = []
 
 for i in range(total_length):
 	filename='mtg-decks/deck-'+str(i)
@@ -63,6 +62,7 @@ for i in range(total_length):
 			current_card = str(current_card).replace("39","'")
 			split_deck[j] = current_card
 
+		deck_list_collection.append(split_deck)
 		deck_lists = deck_lists + split_deck
 
 		# Create the synergy dictionary entries.
@@ -79,10 +79,71 @@ for i in range(total_length):
 
 card_frequencies = Counter(deck_lists)
 
+# Remove low frequency cards from the list.
+keys_to_remove = []
+for key in card_frequencies:
+	if card_frequencies[key] < 4:
+		keys_to_remove.append(key)
+
+for key in keys_to_remove:
+	del card_frequencies[key]
+
+# Get the weighted values of each card.
 for key in card_frequencies:
 	card_count = card_count + card_frequencies[key]
 	card_weights[key] = float(card_frequencies[key])/total_length
 
+# Generate the synergy list
+tmp_card_freq = card_frequencies
+
+card_synergies = {}
+
+print "Starting card frequencies top"
+# Initialize the card synergies.
+for key in card_frequencies:
+	card_synergies[key] = Counter()
+	for other_key in card_frequencies:
+		# Skip repeats
+		if (key == other_key):
+			continue
+		card_synergies[key][other_key] += 0
+
+for deck in deck_list_collection:
+	for card_x in deck:
+		# Skip low frequency cards
+		if card_x not in card_frequencies:
+			continue
+
+		for card_y in deck:
+			# Skip repeats
+			if (card_x == card_y):
+				continue
+			# Skip low frequency cards
+			if card_y not in card_frequencies:
+				continue
+
+			card_synergies[card_x][card_y] += 1
+print "Done cycling through decks."
+
+weighted_synergies = {}
+# Initialize the weighted synergies.
+for key in card_frequencies:
+	weighted_synergies[key] = {}
+
+print "Done initializing weighted synergies"
+
+for key in card_synergies:
+	for other_key in card_synergies[key]:
+		tmp_synergy_value = card_synergies[key][other_key]
+		tmp_frequency_value = card_frequencies[other_key]
+		weighted_synergies[key][other_key] = tmp_synergy_value / tmp_frequency_value
+
+print "Done applying synergy weights"
+
+print weighted_synergies
+
+
+"""
 print "Starting setting up new synergized counts"
 
 card_limit=200
@@ -158,3 +219,4 @@ for key, value in sorted(final_deck.iteritems(), key=lambda (k,v): (v,k), revers
 		print "Omnath, Locus of Rage *CMDR*"
 	else:
 		print "%s" % (key)
+"""
